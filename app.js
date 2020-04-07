@@ -37,19 +37,21 @@ userSubmissions.forEach((post) => {
 // console.log(await data[0].tradeDescription);
 // console.log(await data[2].tradeDescription);
 
-// for (var i=0; i<data.length; i++)
-// {
-//     if (data[i].hasTrade)
-//     {
-//         console.log(await data[i].tradeDescription)
-//     }
-// }
+for (var i=0; i<data.length; i++)
+{
+    if (data[i].hasTrade)
+    {
+        console.log(await data[i].tradeDescription);
+        console.log(await data[i].performance());
+    }
+}
 
-    var d = new Date(0);
-    d.setUTCSeconds(1581033600);
-    var p = new Post(d, 'TSLA 420P 4/17 (closest date to 4/20/20)', '');
-    console.log(await p.tradeDescription);
-    console.log(await p.performance());
+//Test without Reddit API
+    // var d = new Date(0);
+    // d.setUTCSeconds(1581033600);
+    // var p = new Post(d, 'TSLA 420P 4/17 (closest date to 4/20/20)', '');
+    // console.log(await p.tradeDescription);
+    // console.log(await p.performance());
 
 };
 

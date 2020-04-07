@@ -20,6 +20,7 @@ class Post {
         return false;
     }
 
+    //spy400qqq300 needs testing
     get tradeDirection()
     {
         if (this.hasTrade)
@@ -27,7 +28,7 @@ class Post {
             var buySell=1;
             var putCall=1;
             //look for BUY/SELL
-            if (this.title.search(/sell|short/i)>0)//Trade for SPY
+            if (this.title.search(/(sell |short)/i)>0)//Trade for SPY
             {
                 buySell = -1; //Sell
             }
@@ -82,7 +83,7 @@ class Post {
         {            
             return this.performance().then((p)=> {
                 return this.created +' '+ this.longShort + ' ' + this.tradeTicker + ' ' 
-                + p.price
+                // + p.price
                 +' "'+this.title + '"';
             })
 
@@ -96,9 +97,8 @@ class Post {
 
     getPriceFromArray(date, priceArray)
     {       
-        
-        date.setHours(0,0,0,0);
         //console.log (date);
+        date.setHours(0,0,0,0);
 
         let arrayDate;
         for (let i=0; i<priceArray.length; i++)
@@ -107,10 +107,11 @@ class Post {
             arrayDate = new Date(parseInt(priceArray[i].date)*1000);
             //arrayDate.setUTCSeconds(priceArray[i].date);
             //console.log(date +':'+ arrayDate.toDateString());
-            if (date <= arrayDate)
+            if (date <= arrayDate && 
+                priceArray[i].adjclose != null) //Dividend entry - keep moving
             {
                 //console.log(arrayDate.toDateString() +':'+ priceArray[i].adjclose);
-                return {date: arrayDate.toDateString(), price: priceArray[i].adjclose};
+                return {date: arrayDate, price: priceArray[i].adjclose};
             }
         }
         return 'price';
@@ -139,127 +140,65 @@ class Post {
         }
         else
         {
-            let tradeDate = this.created; //If weekend, walk forward
-            //console.log (this.created);
-            //console.log (tradeDate.getMonth()+1+'/'+ tradeDate.getDate()+'/'+  tradeDate.getFullYear())
-            let oneDayDate = new Date (tradeDate);
-            oneDayDate.setDate(oneDayDate.getDate()+1);
-            let twoDayDate = new Date (tradeDate);
-            twoDayDate.setDate(twoDayDate.getDate()+2);
-            let sevenDayDate = new Date (tradeDate);
-            sevenDayDate.setDate(sevenDayDate.getDate()+7);
-            let thirtyDayDate = new Date (tradeDate);
-            thirtyDayDate.setDate(thirtyDayDate.getDate()+30);
+            let createDate = this.created;
+            let thirtyFiveDayDate = new Date (this.created);            
 
-            let tradePrice;
-            let oneDayReturn;
-            let twoDayReturn;
-            let sevenDayReturn;
-            let thirtyDayReturn;
-            
-            var self = this;
+            thirtyFiveDayDate.setDate(createDate.getDate()+35);
 
-            return this.getPrices(tradeDate, thirtyDayDate)
+            return this.getPrices(createDate, thirtyFiveDayDate)
             .then(prices=> {
                 let perfs = [];
                 let basis;
                 let price;
 
                 prices = prices.reverse(); 
+
+                //Get first trading day since post (i.e. account for weekends and holidays)
+                let firstTradeDate = this.getPriceFromArray(createDate,prices);
+                let tradeDate = firstTradeDate.date;
+
+                let oneDayDate = new Date (tradeDate);
+                oneDayDate.setDate(oneDayDate.getDate()+1);
+                let twoDayDate = new Date (tradeDate);
+                twoDayDate.setDate(twoDayDate.getDate()+2);
+                let sevenDayDate = new Date (tradeDate);
+                sevenDayDate.setDate(sevenDayDate.getDate()+7);
+                let thirtyDayDate = new Date (tradeDate);
+                thirtyDayDate.setDate(thirtyDayDate.getDate()+30);                
                 
                 basis = this.getPriceFromArray(tradeDate,prices);
 
                 price = this.getPriceFromArray(oneDayDate,prices);
                 perfs.push ({days: 1, tradeDate:basis.date, tradePrice: basis.price, 
-                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+                    perfDate:price.date, perfPrice:price.price, performance: this.calcPerf(basis.price, price.price, this.tradeDirection)})
                 
                 price = this.getPriceFromArray(twoDayDate,prices);
                 perfs.push ({days: 2, tradeDate:basis.date, tradePrice: basis.price, 
-                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+                    perfDate:price.date, perfPrice:price.price, performance: this.calcPerf(basis.price, price.price, this.tradeDirection)})
 
                 price = this.getPriceFromArray(sevenDayDate,prices);
                 perfs.push ({days: 7, tradeDate:basis.date, tradePrice: basis.price, 
-                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+                    perfDate:price.date, perfPrice:price.price, performance: this.calcPerf(basis.price, price.price, this.tradeDirection)})
 
                 price = this.getPriceFromArray(thirtyDayDate,prices);
                 perfs.push ({days: 30, tradeDate:basis.date, tradePrice: basis.price, 
-                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
-
+                    perfDate:price.date, perfPrice:price.price, performance: this.calcPerf(basis.price, price.price, this.tradeDirection)})
 
                 return perfs;
 
             })// passed result of getPrices
-            .then(result => {           
-                return result;  //Is this necessary  
-            })
             .catch(err => {             // called on any reject
                 console.log('error', err);
             });
-            //return retVal;
-            
+            //return retVal;            
         }
 
     }
-
-    get performanceOld()
+    
+    calcPerf(startPrice, endPrice, direction)
     {
-        if (!this.hasTrade)
-        {
-            return null;
-        }
-        else
-        {
-            let tradeDate = this.created; //If weekend, walk forward
-            //console.log (this.created);
-            //console.log (tradeDate.getMonth()+1+'/'+ tradeDate.getDate()+'/'+  tradeDate.getFullYear())
-            let oneDayDate = new Date (tradeDate);
-            oneDayDate.setDate(oneDayDate.getDate()+1);
-            let twoDayDate = new Date (tradeDate);
-            twoDayDate.setDate(twoDayDate.getDate()+2);
-            let sevenDayDate = new Date (tradeDate);
-            sevenDayDate.setDate(sevenDayDate.getDate()+7);
-            let thirtyDayDate = new Date (tradeDate);
-            thirtyDayDate.setDate(thirtyDayDate.getDate()+30);
-
-            let tradePrice;
-            let oneDayReturn;
-            let twoDayReturn;
-            let sevenDayReturn;
-            let thirtyDayReturn;
-
-            // console.log (tradeDate);
-            // console.log (oneDayDate);
-            // console.log (twoDayDate);
-            // console.log (sevenDayDate);
-            // console.log (thirtyDayDate);
-
-            var prices;
-            var self = this;
-            
-            yahooStockPrices.getHistoricalPrices(tradeDate.getMonth(), tradeDate.getDate(), tradeDate.getFullYear()
-                , thirtyDayDate.getMonth(), thirtyDayDate.getDate(), thirtyDayDate.getFullYear(),this.tradeTicker, '1d', 
-                function(err, yPrices)
-                { 
-                    if (err) {
-                        return console.log(err);
-                    }
-
-                    prices = yPrices.reverse();
-                    //console.log(prices); 
-                    //console.log (tradePrice);
-                    tradePrice = self.getPriceFromArray(tradeDate,prices);
-                    //console.log(tradePrice);
-                    return tradePrice;
-                });
-            
-            
-            //console.log(prices);
-            //tradePrice = this.getPriceFromArray(tradeDate,prices);
-
-        }
-
+        return (endPrice-startPrice)/startPrice * direction* 100;
     }
-
   }
 
   module.exports = Post;
