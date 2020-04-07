@@ -79,21 +79,27 @@ class Post {
     get tradeDescription()
     {
         if (this.hasTrade)
-        {
-            return this.created +' '+ this.longShort + ' ' + this.tradeTicker + ' ' + this.performance
-            +' "'+this.title + '"';
+        {            
+            return this.performance().then((p)=> {
+                return this.created +' '+ this.longShort + ' ' + this.tradeTicker + ' ' 
+                + p.price
+                +' "'+this.title + '"';
+            })
+
         }
         else
         {
             return null;
         }
+        
     }
 
     getPriceFromArray(date, priceArray)
-    {
-        //var retVal = new Object();
-        date.setHours(0,0,0,0);
+    {       
         
+        date.setHours(0,0,0,0);
+        //console.log (date);
+
         let arrayDate;
         for (let i=0; i<priceArray.length; i++)
         {
@@ -103,13 +109,78 @@ class Post {
             //console.log(date +':'+ arrayDate.toDateString());
             if (date <= arrayDate)
             {
+                //console.log(arrayDate.toDateString() +':'+ priceArray[i].adjclose);
                 return {date: arrayDate.toDateString(), price: priceArray[i].adjclose};
             }
         }
-        return null;
+        return 'price';
     }
 
-    get performance()
+
+    getPrices(startDate, endDate) {
+
+        return new Promise((resolve, reject) => {
+      
+            yahooStockPrices.getHistoricalPrices(startDate.getMonth(), startDate.getDate(), 
+            startDate.getFullYear() , endDate.getMonth(), endDate.getDate(), endDate.getFullYear(),
+            this.tradeTicker, '1d',(err, prices)=>{
+                if (err) reject(err);
+                else resolve(prices);
+            });         
+        });
+      
+    }
+
+    performance()
+    {
+        if (!this.hasTrade)
+        {
+            return null;
+        }
+        else
+        {
+            let tradeDate = this.created; //If weekend, walk forward
+            //console.log (this.created);
+            //console.log (tradeDate.getMonth()+1+'/'+ tradeDate.getDate()+'/'+  tradeDate.getFullYear())
+            let oneDayDate = new Date (tradeDate);
+            oneDayDate.setDate(oneDayDate.getDate()+1);
+            let twoDayDate = new Date (tradeDate);
+            twoDayDate.setDate(twoDayDate.getDate()+2);
+            let sevenDayDate = new Date (tradeDate);
+            sevenDayDate.setDate(sevenDayDate.getDate()+7);
+            let thirtyDayDate = new Date (tradeDate);
+            thirtyDayDate.setDate(thirtyDayDate.getDate()+30);
+
+            let tradePrice;
+            let oneDayReturn;
+            let twoDayReturn;
+            let sevenDayReturn;
+            let thirtyDayReturn;
+            
+            var self = this;
+
+            return this.getPrices(tradeDate, thirtyDayDate)
+            .then(prices=> {
+                prices = prices.reverse(); 
+                return this.getPriceFromArray(tradeDate,prices);
+            })// passed result of getPrices
+            .then(result => {           
+                //prices = result.reverse();                
+                //tradePrice = self.getPriceFromArray(tradeDate,prices);
+                //console.log(result);
+                return result;              
+                //.retVal = result;
+            })
+            .catch(err => {             // called on any reject
+                console.log('error', err);
+            });
+            //return retVal;
+            
+        }
+
+    }
+
+    get performanceOld()
     {
         if (!this.hasTrade)
         {
@@ -140,9 +211,9 @@ class Post {
             // console.log (twoDayDate);
             // console.log (sevenDayDate);
             // console.log (thirtyDayDate);
+
             var prices;
             var self = this;
-            
             
             yahooStockPrices.getHistoricalPrices(tradeDate.getMonth(), tradeDate.getDate(), tradeDate.getFullYear()
                 , thirtyDayDate.getMonth(), thirtyDayDate.getDate(), thirtyDayDate.getFullYear(),this.tradeTicker, '1d', 

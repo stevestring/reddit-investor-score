@@ -17,32 +17,35 @@ const r = new snoowrap({
 });
 
 
-const userSubmissions= await r.getUser(userName).getSubmissions();
+// const userSubmissions= await r.getUser(userName).getSubmissions();
 
-let data = [];
-userSubmissions.forEach((post) => {
-    if (post.subreddit.display_name==='wallstreetbets')
-    {
-        var d = new Date(0);
-        d.setUTCSeconds(post.created_utc);
+// let data = [];
+// userSubmissions.forEach((post) => {
+//     if (post.subreddit.display_name==='wallstreetbets')
+//     {
+//         var d = new Date(0);
+//         d.setUTCSeconds(post.created_utc);
 
-        var p = new Post(d, post.title, post.selftext);
+//          var p = new Post(d, post.title, post.selftext);
 
-        data.push(
-            p
-        )
-    }
-});
+//         data.push(
+//             p
+//         )
+//     }
+// });
 
-data.forEach ((post)=>
-{
-    if (post.hasTrade)
-    {
-        console.log(post.tradeDescription);
-    }
-});
+// data.forEach ((post)=>
+// {
+//     if (post.hasTrade)
+//     {
+//         console.log(post.tradeDescription);
+//     }
+// });
+var d = new Date(0);
+       d.setUTCSeconds(1581033600);
 
-
+var p = new Post(d, 'TSLA 420P 4/17 (closest date to 4/20/20)', '');
+console.log(await p.tradeDescription);
 //console.log(data.length);
 
 };
