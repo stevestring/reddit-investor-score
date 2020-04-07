@@ -161,15 +161,36 @@ class Post {
 
             return this.getPrices(tradeDate, thirtyDayDate)
             .then(prices=> {
+                let perfs = [];
+                let basis;
+                let price;
+
                 prices = prices.reverse(); 
-                return this.getPriceFromArray(tradeDate,prices);
+                
+                basis = this.getPriceFromArray(tradeDate,prices);
+
+                price = this.getPriceFromArray(oneDayDate,prices);
+                perfs.push ({days: 1, tradeDate:basis.date, tradePrice: basis.price, 
+                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+                
+                price = this.getPriceFromArray(twoDayDate,prices);
+                perfs.push ({days: 2, tradeDate:basis.date, tradePrice: basis.price, 
+                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+
+                price = this.getPriceFromArray(sevenDayDate,prices);
+                perfs.push ({days: 7, tradeDate:basis.date, tradePrice: basis.price, 
+                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+
+                price = this.getPriceFromArray(thirtyDayDate,prices);
+                perfs.push ({days: 30, tradeDate:basis.date, tradePrice: basis.price, 
+                    perfDate:price.date, perfPrice:price.price, performance: (price.price-basis.price)/basis.price })
+
+
+                return perfs;
+
             })// passed result of getPrices
             .then(result => {           
-                //prices = result.reverse();                
-                //tradePrice = self.getPriceFromArray(tradeDate,prices);
-                //console.log(result);
-                return result;              
-                //.retVal = result;
+                return result;  //Is this necessary  
             })
             .catch(err => {             // called on any reject
                 console.log('error', err);
