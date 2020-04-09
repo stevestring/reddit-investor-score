@@ -28,17 +28,15 @@ class Post {
             var buySell=1;
             var putCall=1;
             //look for BUY/SELL
-            if (this.title.search(/(sell |short)/i)>0)//Trade for SPY
+            if (this.title.search(/(sell|short)/i)!=-1)//Trade for SPY
             {
                 buySell = -1; //Sell
             }
 
-            if (this.title.search(/put/i)>0 || this.title.search(/[0-9]{1,5}[P]/i)>0)
+            if (this.title.search(/put/i)>0 || this.title.search(/[0-9]{1,5}[P]/i)!=-1)
             {
                 putCall = -1;
             }
-
-            //console.log (buySell + ':'+putCall);
 
             return buySell * putCall;
         }
@@ -128,10 +126,12 @@ class Post {
                 if (err) reject(err);
                 else resolve(prices);
             });         
-        });
-      
+        });      
     }
 
+
+
+    ///TODO Try to send get prices as an argument to 
     performance()
     {
         if (!this.hasTrade)
@@ -200,5 +200,20 @@ class Post {
         return (endPrice-startPrice)/startPrice * direction* 100;
     }
   }
+  
+  module.exports.getPrices2 = function(ticker, startDate) {
 
+    let endDate = new Date (startDate);  
+    endDate.setDate(endDate.getDate()+5);
+
+    return new Promise((resolve, reject) => {
+  
+        yahooStockPrices.getHistoricalPrices(startDate.getMonth(), startDate.getDate(), 
+        startDate.getFullYear() , endDate.getMonth(), endDate.getDate(), endDate.getFullYear(),
+        ticker, '1d',(err, prices)=>{
+            if (err) reject(err);
+            else resolve(prices);
+        });         
+    });      
+}
   module.exports = Post;

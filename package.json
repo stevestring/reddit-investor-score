@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Steve String",
   "license": "ISC",
   "dependencies": {
     "snoowrap": "^1.21.0",
     "yahoo-stock-prices": "^1.0.1"
+  },
+  "devDependencies": {
+    "jest": "^25.3.0"
   }
 }
